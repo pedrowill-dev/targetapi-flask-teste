@@ -1,0 +1,295 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: CEP TargetData API
+  description: API para buscar informações climáticas de uma cidade a partir do CEP
+
+  
+consumes:
+  - application/json
+produces:
+  - application/json
+basePath: /
+
+
+tags:
+  - name: Autenticação
+    description: 'Endpoints para autenticação de usuário'
+  - name: Logs
+    description: 'Retorna os logs armazenados no Elasticsearch'
+  - name: Clima
+    description: 'Busca informações climáticas de uma cidade a partir do CEP'
+
+
+
+
+securityDefinitions:
+  bearerAuth:
+    type: apiKey
+    name: x-access-token
+    in: header
+
+
+paths:
+
+  /auth/login:
+    post:
+      tags:
+        - Autenticação
+      summary: 'Autentica um usuário e retorna um token de segurança'
+      description: 'Autentica um usuário verificando seu nome de username e password, e retorna um token de segurança que pode ser usado para autenticar solicitações subsequentes'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+                description: 'O nome de usuário do usuário'
+                example: 'johndoe'
+              password:
+                type: string
+                format: password
+                description: 'A senha do usuário'
+                example: 'secret'
+            required:
+              - username
+              - password
+      responses:
+        '200':
+          description: 'Login bem-sucedido'
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                description: 'O token de segurança para o usuário autenticado'
+                example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmZTU3NjZjNjUyOWIyMDAxNzk3YmU1NSIsImV4cCI6MTYxODI4MTA2MywidXNlcm5hbWUiOiJqb2huZG9lIn0.07NBQ7VZ24OaAKb7VX9G1fCO7aKjSmPw4i4e4x'
+            required:
+              - token
+        '401':
+          description: 'Falha no login'
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: 'A mensagem de erro'
+                example: 'Senha incorreta'
+            required:
+              - message
+
+  /auth/signup:
+
+    post:
+      tags:
+        - Autenticação
+      summary: 'Registra um novo usuário'
+      description: 'Registra um novo usuário no sistema'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+                description: 'O nome de usuário do novo usuário'
+                example: 'johndoe'
+              password:
+                type: string
+                format: password
+                description: 'A senha do novo usuário'
+                example: 'secret'
+            required:
+              - username
+              - password
+      responses:
+        '201':
+          description: 'Registro bem-sucedido'
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: 'A mensagem de sucesso'
+                example: 'Usuario registrado com sucesso'
+              id:
+                type: string
+                description: 'O ID do novo usuário registrado'
+                example: '5f66e61c6529b2001797be4c'
+            required:
+              - message
+              - id
+        '401':
+          description: 'Falha no registro'
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: 'A mensagem de erro'
+                example: 'Usuário já cadastrado'
+            required:
+              - message
+
+  /cep/search:
+  
+    post:
+
+      tags:
+          - Clima
+      summary: Busca informações climáticas de uma cidade a partir do CEP
+      description: Retorna informações climáticas de uma cidade a partir do CEP informado na requisição. Requer autenticação via token de acesso.
+      operationId: search_cep
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: body
+          name: cep
+          description: CEP a ser buscado
+          required: true
+          schema:
+            type: object
+            properties:
+              cep:
+                type: string
+                example: "12345678"
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              cidade:
+                type: string
+                example: "São Paulo"
+              uf:
+                type: string
+                example: "SP"
+              info_cep:
+                type: object
+                properties:
+                  cep:
+                    type: string
+                    example: "12345678"
+                  logradouro:
+                    type: string
+                    example: "Rua Exemplo"
+                  complemento:
+                    type: string
+                    example: "Complemento Exemplo"
+                  bairro:
+                    type: string
+                    example: "Bairro Exemplo"
+                  localidade:
+                    type: string
+                    example: "São Paulo"
+                  uf:
+                    type: string
+                    example: "SP"
+                  ibge:
+                    type: string
+                    example: "1234567"
+                  gia:
+                    type: string
+                    example: "1234"
+                  ddd:
+                    type: string
+                    example: "11"
+                  siafi:
+                    type: string
+                    example: "1234"
+              previsao:
+                type: object
+                properties:
+                  cidade:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "123"
+                      nome:
+                        type: string
+                        example: "São Paulo"
+                  uf:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "456"
+                      nome:
+                        type: string
+                        example: "SP"
+                  atualizacao:
+                    type: string
+                    example: "2023-03-21T12:00:00Z"
+                  previsao:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        dia:
+                          type: string
+                          example: "21/03/2023"
+                        tempo:
+                          type: string
+                          example: "Céu claro"
+                        maxima:
+                          type: string
+                          example: "30"
+                        minima:
+                          type: string
+                          example: "20"
+        400:
+          description: Bad Request
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "O CEP informado é inválido."
+        401:
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Token de acesso inválido."
+  
+
+
+  /logs:
+    get:
+      tags:
+        - Logs
+      summary: Retorna os logs armazenados no Elasticsearch
+      description: Retorna todos os logs armazenados no Elasticsearch para fins de depuração e análise. Não requer autenticação.
+      operationId: get_logs
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    level:
+                      type: string
+                      example: "INFO"
+                    message:
+                      type: string
+                      example: "Request completed successfully"
+                    timestamp:
+                      type: string
+                      format: date-time
+                      example: "2022-03-21T12:34:56Z"
+                    source:
+                      type: string
+                      example: "http://localhost:5000"
